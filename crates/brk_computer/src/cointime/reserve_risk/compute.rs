@@ -33,11 +33,24 @@ impl Vecs {
         )?;
 
         if let Some(reserve_risk) = self.reserve_risk.as_mut() {
+            // Reserve Risk = Price / HODL Bank
+            // HODL Bank is cumulative and should stay positive with real Bitcoin data,
+            // but we protect against division by zero or negative values which would
+            // produce infinity/NaN. In such cases, return NaN to signal invalid data.
             reserve_risk.compute_all(starting_indexes, exit, |v| {
-                v.compute_divide(
+                v.compute_transform2(
                     starting_indexes.dateindex,
                     price_close,
                     &self.hodl_bank,
+                    |(i, price, hodl_bank, _): (_, Close<Dollars>, StoredF64, _)| {
+                        let hb = f64::from(hodl_bank);
+                        let result = if hb <= 0.0 {
+                            f64::NAN
+                        } else {
+                            f64::from(price) / hb
+                        };
+                        (i, StoredF64::from(result))
+                    },
                     exit,
                 )?;
                 Ok(())

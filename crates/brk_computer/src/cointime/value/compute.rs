@@ -63,7 +63,6 @@ impl Vecs {
             })?;
 
         // VOCDD: Value-weighted Coin Days Destroyed = CDD × price
-        // This is a key input for Reserve Risk calculation
         self.vocdd
             .compute_all(indexes, starting_indexes, exit, |vec| {
                 vec.compute_multiply(
